@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claim desk · Project Sankalp</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><h1>Claim desk</h1><p>Checks an expiry or breakage claim against policy CO-POL-014 and recommends. A person decides.</p>
+<span id="health" class="pill">checking…</span></header>
+<main>
+<section class="card">
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="t-reg" role="tab">Claim number</button>
+    <button class="tab" data-tab="t-new" role="tab">New claim</button>
+    <button class="tab" data-tab="t-mail" role="tab">Email</button>
+  </div>
+  <form id="t-reg" class="pane">
+    <label>Claim number <input id="claim_no" placeholder="CLM-2603-02697" autocomplete="off"></label>
+    <div class="row"><button>Check claim</button>
+    <span class="samples">Try: <a href="#" data-claim="CLM-2603-02697">early near-expiry</a> · <a href="#" data-claim="CLM-2608-01758">over quantity</a> · <a href="#" data-claim="CLM-2607-02627">Matrix Medicos</a></span></div>
+  </form>
+  <form id="t-new" class="pane" hidden>
+    <div class="grid">
+      <label>Stockist code <input id="n_stockist" placeholder="STK0140" required></label>
+      <label>Batch no <input id="n_batch" required></label>
+      <label>Quantity (packs) <input id="n_qty" type="number" min="1" step="1" required></label>
+      <label>Claim type <select id="n_type"><option value="">work it out from expiry</option><option>Near expiry</option><option>Expired</option><option>Breakage in transit</option><option>Short supply</option></select></label>
+      <label>Invoice reference <input id="n_inv" placeholder="INV/… (optional)"></label>
+      <label>Claim date <input id="n_date" type="date"></label>
+      <label>Resend of claim no <input id="n_resub" placeholder="CLM-… (optional)"></label>
+    </div>
+    <label>Area Manager approval (needed only if there is no invoice reference): paste the approval text; it must name the claim number
+      <textarea id="n_appr" rows="2" placeholder="e.g. Approved: CLM-2611-00001, batch … — A. Manager"></textarea></label>
+    <button>Check claim</button>
+  </form>
+  <form id="t-mail" class="pane" hidden>
+    <div class="grid">
+      <label>Sender's stockist code <input id="m_sender" placeholder="STK0140"></label>
+      <label>Received <input id="m_recv" type="date"></label>
+    </div>
+    <label>Email text <textarea id="m_text" rows="7" placeholder="Paste the stockist's email here"></textarea></label>
+    <div class="row"><button>Check email</button><span class="samples">Sample mailbox: <select id="m_sample"><option value="">choose…</option></select></span></div>
+  </form>
+</section>
+<div id="out" aria-live="polite"></div>
+<section class="card"><h2>Audit of claims already credited</h2>
+<p class="muted">Re-checks every credited claim against the rules as written (strict). Takes a few seconds.</p>
+<button id="audit" class="ghost">Run audit</button><div id="audit_out"></div></section>
+</main>
+<footer>Facts come from the data files. The model, if switched on, only reads emails and words the explanation. Decisions are written to the log only.</footer>
+<script src="/app.js"></script>
+</body>
+</html>
