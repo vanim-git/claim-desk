@@ -7,9 +7,11 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header><h1>Claim desk</h1><p>Checks an expiry or breakage claim against policy CO-POL-014 and recommends. A person decides. <a href="/stock.html">Expiry watch (P3)</a> · <a href="/schemes.html">Scheme desk (P2)</a> · <a href="/supply.html">Supply desk (P1)</a></p>
+<header><h1>Claim desk</h1><p>Checks an expiry or breakage claim against policy CO-POL-014 and recommends. A person decides.</p>
 <span id="health" class="pill">checking…</span></header>
 <main>
+<nav class="nav" role="tablist"><button class="navtab on" data-page="claim" role="tab">Claim desk (P4–P5)</button><button class="navtab" data-page="stock" role="tab">Expiry watch (P3)</button><button class="navtab" data-page="schemes" role="tab">Scheme desk (P2)</button><button class="navtab" data-page="supply" role="tab">Supply desk (P1)</button></nav>
+<div id="p-claim" class="page">
 <section class="card">
   <div class="tabs" role="tablist">
     <button class="tab on" data-tab="t-reg" role="tab">Claim number</button>
@@ -48,8 +50,28 @@
 <section class="card"><h2>Audit of claims already credited</h2>
 <p class="muted">Re-checks every credited claim against the rules as written (strict). Takes a few seconds.</p>
 <button id="audit" class="ghost">Run audit</button><div id="audit_out"></div></section>
+</div>
+<div id="p-stock" class="page" hidden><p class="muted">Stock heading under 60% remaining shelf life, by C&amp;F. Breaches are flagged, not blocked. A person decides: sell first, return or reallocate.</p>
+<section class="card">
+  <label>Who is looking
+    <select id="st_viewer"><option value="all">Kavita Rao: all C&amp;Fs</option><option value="CF-E01">Subhajit Banerjee: Kolkata (CF-E01, Hooghly)</option>
+    <option value="CF-N01">CF-N01</option><option value="CF-N02">CF-N02</option><option value="CF-S01">CF-S01</option><option value="CF-S02">CF-S02</option><option value="CF-W01">CF-W01</option></select></label>
+  <button id="st_go">Show early warning</button>
+</section>
+<div id="st_out" aria-live="polite"></div>
+</div><div id="p-schemes" class="page" hidden><p class="muted">Which scheme SKUs come back as expiry claims, and which stockists look over-stocked before a scheme. Warns only; the scheme desk decides.</p>
+<section class="card"><button id="sc_go">Show scheme desk</button></section>
+<div id="sc_out" aria-live="polite"></div>
+</div><div id="p-supply" class="page" hidden><p class="muted">Unfilled orders, allocation shares against what each C&amp;F's stockists order, and spare stock that could move through the CDC. Proposals only: Kavita Rao approves.</p>
+<section class="card"><button id="su_go">Show supply desk</button></section>
+<div id="su_out" aria-live="polite"></div>
+</div>
 </main>
 <footer>Facts come from the data files. The model, if switched on, only reads emails and words the explanation. Decisions are written to the log only.</footer>
 <script src="/app.js"></script>
+<script src="/stock.js"></script>
+<script src="/schemes.js"></script>
+<script src="/supply.js"></script>
+<script src="/nav.js"></script>
 </body>
 </html>

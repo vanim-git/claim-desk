@@ -1,3 +1,4 @@
+(() => {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const L = (v) => "₹" + (v / 1e5).toFixed(1) + " L";
@@ -23,14 +24,15 @@ function render(d) {
   const last = b.lines.slice(-15).reverse().map((r) => `<tr><td>${esc(r.date)}</td><td>${esc(r.invoice)}</td><td>${esc(r.cnf)}</td><td>${esc(r.stockist)}</td><td>${esc(r.batch)}</td><td>${r.packs}</td><td>${pct(r.rsl)}</td><td>${L(r.value)}</td></tr>`).join("");
   h += `<div class="card"><h2>Dispatches under 60% RSL, last 12 months (${esc(b.clause)})</h2><p>Total ${L(b.total_value)}, ${b.lines.length} lines.</p><ul>${by}</ul>
     <table><thead><tr><th>Date</th><th>Invoice</th><th>C&amp;F</th><th>Stockist</th><th>Batch</th><th>Packs</th><th>RSL</th><th>Value</th></tr></thead><tbody>${last}</tbody></table><div class="muted">Latest 15 shown.</div></div>`;
-  $("out").innerHTML = h;
+  $("st_out").innerHTML = h;
 }
 
-$("go").addEventListener("click", async () => {
-  $("out").textContent = "Working…";
+$("st_go").addEventListener("click", async () => {
+  $("st_out").textContent = "Working…";
   try {
-    const r = await fetch("/api/expiry-watch?viewer=" + encodeURIComponent($("viewer").value));
+    const r = await fetch("/api/expiry-watch?viewer=" + encodeURIComponent($("st_viewer").value));
     if (!r.ok) throw new Error((await r.json()).error || r.statusText);
     render(await r.json());
-  } catch (e) { $("out").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  } catch (e) { $("st_out").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
 });
+})();

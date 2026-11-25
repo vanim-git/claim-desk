@@ -64,3 +64,11 @@ def test_api_route():
     r = c.get("/api/expiry-watch", params={"viewer": "CF-E01"})
     assert r.status_code == 200 and r.json()["cnfs"][0]["cnf"] == "CF-E01"
     assert c.get("/api/expiry-watch", params={"as_of": "xx"}).status_code == 422
+
+
+def test_front_page_has_one_tab_per_desk_and_old_pages_redirect():
+    c = TestClient(app)
+    html = c.get("/").text
+    assert all(f'data-page="{p}"' in html for p in ("claim", "stock", "schemes", "supply"))
+    assert 'src="/nav.js"' in html and "/stock.html" not in html
+    assert "url=/#stock" in c.get("/stock.html").text

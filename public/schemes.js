@@ -1,3 +1,4 @@
+(() => {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const L = (v) => "₹" + (v / 1e5).toFixed(1) + " L";
@@ -16,14 +17,15 @@ function render(d) {
     <p>${d.warnings.length} stockist-SKU pairs with estimated stock above 2.5 months (§4.5). By C&amp;F: ${esc(JSON.stringify(d.by_cnf))}. Showing 60.</p>
     <table><thead><tr><th>C&amp;F</th><th>Stockist</th><th>SKU</th><th>Est. months of stock</th><th>Bought, last 90 days</th><th>Warning</th></tr></thead><tbody>${w}</tbody></table>
     <div class="muted">${d.notes.map(esc).join(" · ")}</div></div>`;
-  $("out").innerHTML = h;
+  $("sc_out").innerHTML = h;
 }
 
-$("go").addEventListener("click", async () => {
-  $("out").textContent = "Working…";
+$("sc_go").addEventListener("click", async () => {
+  $("sc_out").textContent = "Working…";
   try {
     const r = await fetch("/api/scheme-desk");
     if (!r.ok) throw new Error((await r.json()).error || r.statusText);
     render(await r.json());
-  } catch (e) { $("out").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  } catch (e) { $("sc_out").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
 });
+})();

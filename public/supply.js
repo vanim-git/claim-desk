@@ -1,3 +1,4 @@
+(() => {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const Cr = (v) => "₹" + (v / 1e7).toFixed(2) + " cr";
@@ -18,14 +19,15 @@ function render(d) {
   h += `<div class="card"><h2>Proposed moves through ${esc(m.moves[0]?.via || "the CDC")} (as of ${esc(m.as_of)})</h2><p>${L(m.covered_value)} of spare stock could cover part of ${L(m.unmet_value)} a month of unmet need. ${esc(m.note)}</p>
     <table><thead><tr><th>SKU</th><th>From</th><th>To</th><th>Packs</th><th>Value</th></tr></thead><tbody>${mr}</tbody></table></div>`;
   h += `<div class="card muted">${d.notes.map(esc).join("<br>")}</div>`;
-  $("out").innerHTML = h;
+  $("su_out").innerHTML = h;
 }
 
-$("go").addEventListener("click", async () => {
-  $("out").textContent = "Working…";
+$("su_go").addEventListener("click", async () => {
+  $("su_out").textContent = "Working…";
   try {
     const r = await fetch("/api/supply-desk");
     if (!r.ok) throw new Error((await r.json()).error || r.statusText);
     render(await r.json());
-  } catch (e) { $("out").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  } catch (e) { $("su_out").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
 });
+})();
