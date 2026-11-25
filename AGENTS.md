@@ -39,3 +39,9 @@ A person may reject and the tool recommends Reject with the clause; no-invoice c
 
 ## Current task
 Pilot test on new claims (22 Nov). Done = deployed on Vercel, `/api/health` ok, `pytest -q` green. Next slice: link a resent claim to the first one and judge §5.2 on the original date.
+
+## P3 (expiry watch)
+Rules live in `agent/stock.py`; the graph in `agent/stock_graph.py`; limits in `config.py`. Breaches are flagged, never blocked (`BLOCK_BELOW_FLOOR = False`). RDM names are only known for CF-E01; add others in `config.RDM` when Kavita confirms.
+
+## P2 and P1
+Rules in `agent/schemes.py` and `agent/supply.py`, graphs in `agent/schemes_graph.py` and `agent/supply_graph.py`. Load shared data in the `plan` node before any `Send` fan-out. Warn, never block (`SCHEME_BLOCKS = False`). Moves and share changes are proposals for Kavita Rao.

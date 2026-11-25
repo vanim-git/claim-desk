@@ -37,3 +37,9 @@ Optional: `cp .env.example .env` and add `OPENROUTER_API_KEY` (only once IT appr
 | Replies to stockists | draft text only, never sent | none |
 
 Deploy: see `../Claude-Output/vercel_deploy_steps.md`.
+
+## P3 expiry watch (second graph)
+`/stock.html` (API: `GET /api/expiry-watch?viewer=all|CF-E01&as_of=YYYY-MM-DD`). Code: `agent/stock.py` (rules), `agent/stock_graph.py` (one `check_cnf` run per C&F via `Send`, then pick list and §7.1 breach list). Thresholds in `config.py` (60% floor, 70% warning, 2 months buffer, flag-not-block). Data: `data/cnf_stock_snapshot.csv`. No model, nothing stored. Tests: `tests/test_stock.py`.
+
+## P2 and P1
+`/schemes.html` (`GET /api/scheme-desk`; `agent/schemes.py`, `schemes_graph.py`) and `/supply.html` (`GET /api/supply-desk`; `agent/supply.py`, `supply_graph.py`). Limits in `config.py`. No model, nothing stored, proposals only. Tests: `tests/test_schemes.py`, `tests/test_supply.py` (73 in all).

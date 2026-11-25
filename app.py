@@ -12,6 +12,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+from agent.schemes_graph import run_schemes
+from agent.supply_graph import run_supply
+from agent.stock_graph import run_watch
 from agent.graph import audit_credited, llm_available, run_claim
 
 app = FastAPI(title="Project Sankalp claim desk")
@@ -77,6 +80,34 @@ def decision(body: Decision):
 def audit():
     """Re-check every credited claim in strict mode: the money already paid against the rules."""
     return audit_credited()
+
+
+@app.get("/api/expiry-watch")
+def expiry_watch(viewer: str = "all", as_of: str | None = None):
+    """P3 weekly early warning. viewer = 'all' (Supply Chain head) or one C&F code (that region's RDM)."""
+    from datetime import date
+    try:
+        d = date.fromisoformat(as_of) if as_of else None
+    except ValueError:
+        return JSONResponse({"error": "as_of must be YYYY-MM-DD"}, status_code=422)
+    return JSONResponse(jsonable_encoder(run_watch(viewer, d)))
+
+
+@app.get("/api/scheme-desk")
+def scheme_desk(as_of: str | None = None):
+    """P2: per-SKU scheme stock vs expiry claims, free-goods cap by quarter, and stockists whose estimated stock is above 2.5 months."""
+    from datetime import date
+    try:
+        d = date.fromisoformat(as_of) if as_of else None
+    except ValueError:
+        return JSONResponse({"error": "as_of must be YYYY-MM-DD"}, status_code=422)
+    return JSONResponse(jsonable_encoder(run_schemes(d)))
+
+
+@app.get("/api/supply-desk")
+def supply_desk():
+    """P1: unfilled orders, allocation shares vs current, and proposed moves of spare stock through the CDC."""
+    return JSONResponse(jsonable_encoder(run_supply()))
 
 
 @app.get("/")
