@@ -8,13 +8,13 @@ The **claim desk** for Project Sankalp problem P5. Neha Bansal's Finance team ch
 The tool recommends Approve, Reject or Needs a person, with the rule, clause and file row behind each check. A person decides.
 It fixes P5 for new claims only; the 373 claims already credited are re-checked by `/api/audit`, not changed.
 
-## Architecture (v2.3, stateless)
+## Architecture (v2.3; the graph is stateless, steps go to an append-only file)
 Main graph: `intake -> parse_email -> split_lines -> check_line x N (Send) -> explain -> record`.
 `check_line` is a compiled subgraph: `validate_claim -> match_register -> gather_facts -> run_checks -> decide`.
 - Model nodes (optional): `parse_email`, `explain`. Without `OPENROUTER_API_KEY` they run on regex and a template.
 - Plain code: everything else. Rules R1-R8 and D0 are in `agent/rules.py`, limits in `config.py` with page references.
 - Injection is detected by code (`agent/parsing.py`), never by the model. A flag forces Needs a person.
-- No database, no checkpointer. `/api/decision` only logs; `/api/audit` re-checks credited claims strictly.
+- No database, no checkpointer. `/api/decision` adds the decision to the append-only action log (`agent/actionlog.py`: one JSON line per step, each line carries the hash of the one before, `GET /api/actions` checks the chain); `/api/audit` re-checks credited claims strictly.
 - Only `line_results` is shared between the subgraph and the main graph. Keep the other subgraph keys prefixed `l`.
 
 ## Rules
@@ -45,3 +45,10 @@ Rules live in `agent/stock.py`; the graph in `agent/stock_graph.py`; limits in `
 
 ## P2 and P1
 Rules in `agent/schemes.py` and `agent/supply.py`, graphs in `agent/schemes_graph.py` and `agent/supply_graph.py`. Load shared data in the `plan` node before any `Send` fan-out. Warn, never block (`SCHEME_BLOCKS = False`). Moves and share changes are proposals for Kavita Rao.
+
+## Added 25 Nov: digest, sources, data log, outward
+- Tab "Weekly digest" (`/#digest`, `GET /api/digest`): one section per owner, read-only, nothing stored or sent (`agent/digest.py`). `GET /api/data-log` counts the fixes made while loading the raw CSVs.
+- P1-P3 results carry `evidence` (source rows) and the pages show a Source column.
+- Outward (monthly sales out of a C&F) is taken from invoices: median of the last six months of paid packs (`config.OUTWARD_FROM_INVOICES`, `OUTWARD_MONTHS`). The snapshot's `avg_monthly_outward_packs` runs at about 0.35 of that and is only a fallback. 83 tests.
+- **Action log** (`agent/actionlog.py`): append-only, hash-chained, one line per step a person took ("return requested", "move approved", claim decisions). `POST /api/action`, `GET /api/actions`; form on the Weekly digest tab. Where: `ACTION_LOG` env var, else `data/action_log.jsonl` (git-ignored), else `/tmp` on Vercel, where it is **lost on a cold start**: a hosted store is still needed for real use. No sign-in yet, so the name is typed. Tests never touch the real file (`tests/conftest.py`). 89 tests.
+- Outward from invoices is final (the user confirmed 25 Nov); React and pandas are not used.

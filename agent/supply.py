@@ -22,7 +22,8 @@ def lines() -> list[dict]:
         if not s["date"]:
             continue
         e = g.setdefault((s["invoice"], s["sku"]), dict(invoice=s["invoice"], sku=s["sku"], date=s["date"], cnf=s["cnf"],
-                                                         stockist=s["stockist"], ordered=0.0, supplied=0.0, pts=s["pts"]))
+                                                         stockist=s["stockist"], ordered=0.0, supplied=0.0, pts=s["pts"], rows=[]))
+        e["rows"].append(s["row"])
         e["ordered"] = max(e["ordered"], s["ordered"])
         e["supplied"] += s["paid"] + s["free"]
     out = []
@@ -115,16 +116,19 @@ def moves(as_of: date | None = None, months: int = 3) -> dict:
     (closing stock above 2 months of outward) at other C&Fs, through the CDC. A proposal for Kavita; nothing moves by itself."""
     as_of = as_of or S.latest_date()
     since = as_of - timedelta(days=int(months * C.DAYS_PER_MONTH))
-    need = defaultdict(float)
+    need, need_ls = defaultdict(float), defaultdict(list)
     for l in lines():
         if since < l["date"] <= as_of:
             need[(l["cnf"], l["sku"])] += l["unfilled"] / months
-    held, outward = defaultdict(float), {}
+            if l["unfilled"] > 0:
+                need_ls[(l["cnf"], l["sku"])].append(l)
+    held, outward, snap_rows = defaultdict(float), {}, defaultdict(list)
     for r in S.snapshots():
         if r["as_of"] == as_of and r["batch"]:
             held[(r["cnf"], r["sku"])] += r["qty"]
+            snap_rows[(r["cnf"], r["sku"])].append(r["row"])
         if r["as_of"] == as_of:
-            outward[(r["cnf"], r["sku"])] = r["outward"]
+            outward[(r["cnf"], r["sku"])] = S.outward_for(r["cnf"], r["sku"], as_of, r["outward"])
     spare = {k: max(held[k] - C.SPARE_BUFFER_MONTHS * outward.get(k, 0), 0) for k in held}
     pts = lambda sk: (D.get().sku.get(sk) or {}).get("pts") or 0
     out = []
@@ -137,7 +141,10 @@ def moves(as_of: date | None = None, months: int = 3) -> dict:
             q = min(gap, avail)
             if q < 1:
                 continue
-            out.append(dict(sku=sk, from_cnf=dc, to_cnf=rc, packs=round(q), value=q * pts(sk), via=C.CDC, days=C.TRANSFER_DAYS))
+            out.append(dict(sku=sk, from_cnf=dc, to_cnf=rc, packs=round(q), value=q * pts(sk), via=C.CDC, days=C.TRANSFER_DAYS,
+                            evidence=dict(spare_at=dict(file="cnf_stock_snapshot.csv", rows=snap_rows[(dc, sk)][:6]),
+                                          need_at=dict(file="primary_sales.csv", invoice_lines=[dict(invoice=l["invoice"], rows=l["rows"])
+                                                       for l in sorted(need_ls[(rc, sk)], key=lambda l: -l["unfilled"])[:3]]))))
             spare[(dc, sk)] -= q
             gap -= q
             if gap < 1:

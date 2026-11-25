@@ -31,6 +31,7 @@ def plan(state: State) -> dict:
     from agent import data as D
     D.get()   # load once here: parallel branches would each build their own copy
     as_of = state.get("as_of") or S.latest_date()
+    S.outward_by_pair(as_of)   # invoice-based outward, built once here
     all_cnfs = sorted({r["cnf"] for r in S.snapshots() if r["as_of"] == as_of})
     v = state.get("viewer") or "all"
     return {"as_of": as_of, "cnfs": all_cnfs if v == "all" else [c for c in all_cnfs if c == v]}

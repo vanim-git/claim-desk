@@ -33,7 +33,7 @@ Optional: `cp .env.example .env` and add `OPENROUTER_API_KEY` (only once IT appr
 | Quantity above invoiced + free | Recommend Reject | `QTY_OVER_ACTION` |
 | No invoice reference | Needs a person unless batch invoiced to the stockist, qty within it, and written Area Manager approval names the claim | R2 |
 | Batch older than the data | Needs a person, never rejected | R1/R2 unknown |
-| Decisions | logged to the function log only (SAP stays the record) | `/api/decision` |
+| Decisions and steps | appended to an append-only file (`data/action_log.jsonl`; `/tmp` on Vercel, not durable there); SAP stays the record | `/api/decision`, `/api/action`, `/api/actions` |
 | Replies to stockists | draft text only, never sent | none |
 
 Deploy: see `../Claude-Output/vercel_deploy_steps.md`.
@@ -43,3 +43,10 @@ the "Expiry watch (P3)" tab (`/#stock`; API: `GET /api/expiry-watch?viewer=all|C
 
 ## P2 and P1
 the "Scheme desk (P2)" tab (`/#schemes`; `GET /api/scheme-desk`; `agent/schemes.py`, `schemes_graph.py`) and the "Supply desk (P1)" tab (`/#supply`; `GET /api/supply-desk`; `agent/supply.py`, `supply_graph.py`). Limits in `config.py`. No model, nothing stored, proposals only. Tests: `tests/test_schemes.py`, `tests/test_supply.py` (73 in all).
+
+## Added 25 Nov: digest, sources, data log, outward
+- Tab "Weekly digest" (`/#digest`, `GET /api/digest`): one section per owner, read-only, nothing stored or sent (`agent/digest.py`). `GET /api/data-log` counts the fixes made while loading the raw CSVs.
+- P1-P3 results carry `evidence` (source rows) and the pages show a Source column.
+- Outward (monthly sales out of a C&F) is taken from invoices: median of the last six months of paid packs (`config.OUTWARD_FROM_INVOICES`, `OUTWARD_MONTHS`). The snapshot's `avg_monthly_outward_packs` runs at about 0.35 of that and is only a fallback. 83 tests.
+- **Action log** (`agent/actionlog.py`): append-only, hash-chained, one line per step a person took ("return requested", "move approved", claim decisions). `POST /api/action`, `GET /api/actions`; form on the Weekly digest tab. Where: `ACTION_LOG` env var, else `data/action_log.jsonl` (git-ignored), else `/tmp` on Vercel, where it is **lost on a cold start**: a hosted store is still needed for real use. No sign-in yet, so the name is typed. Tests never touch the real file (`tests/conftest.py`). 89 tests.
+- Outward from invoices is final (the user confirmed 25 Nov); React and pandas are not used.

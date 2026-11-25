@@ -6,8 +6,8 @@ const pct = (v) => (v * 100).toFixed(0) + "%";
 
 function batchTable(bs) {
   const rows = bs.map((b) => `<tr><td>${esc(b.sku)} ${esc(b.product)}</td><td>${esc(b.batch)}</td><td>${esc(b.expiry)}</td><td>${pct(b.rsl)}</td>
-    <td>${esc(b.band)}</td><td>${b.qty}</td><td>${b.can_sell}</td><td>${b.excess}</td><td>${esc(b.action)}${b.over_buffer ? " (over 2 months cover)" : ""}</td></tr>`).join("");
-  return `<table><thead><tr><th>SKU</th><th>Batch</th><th>Expiry</th><th>RSL</th><th>Band</th><th>Packs</th><th>Can sell in region</th><th>Excess</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <td>${esc(b.band)}</td><td>${b.qty}</td><td>${b.can_sell}</td><td>${b.excess}</td><td>${esc(b.action)}${b.over_buffer ? " (over 2 months cover)" : ""}</td><td class="muted">snapshot row ${b.row}</td></tr>`).join("");
+  return `<table><thead><tr><th>SKU</th><th>Batch</th><th>Expiry</th><th>RSL</th><th>Band</th><th>Packs</th><th>Can sell in region</th><th>Excess</th><th>Action</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function render(d) {
@@ -21,9 +21,9 @@ function render(d) {
       <table><thead><tr><th>SKU</th><th>Pick order</th><th>Batch</th><th>Expiry</th><th>RSL</th><th>Packs</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   });
   const b = d.breaches, by = Object.values(b.by_cnf).map((e) => `<li>${esc(e.cnf)}: ${e.lines} lines, ${L(e.value)}</li>`).join("");
-  const last = b.lines.slice(-15).reverse().map((r) => `<tr><td>${esc(r.date)}</td><td>${esc(r.invoice)}</td><td>${esc(r.cnf)}</td><td>${esc(r.stockist)}</td><td>${esc(r.batch)}</td><td>${r.packs}</td><td>${pct(r.rsl)}</td><td>${L(r.value)}</td></tr>`).join("");
+  const last = b.lines.slice(-15).reverse().map((r) => `<tr><td>${esc(r.date)}</td><td>${esc(r.invoice)}</td><td>${esc(r.cnf)}</td><td>${esc(r.stockist)}</td><td>${esc(r.batch)}</td><td>${r.packs}</td><td>${pct(r.rsl)}</td><td>${L(r.value)}</td><td class="muted">sales row ${r.row}</td></tr>`).join("");
   h += `<div class="card"><h2>Dispatches under 60% RSL, last 12 months (${esc(b.clause)})</h2><p>Total ${L(b.total_value)}, ${b.lines.length} lines.</p><ul>${by}</ul>
-    <table><thead><tr><th>Date</th><th>Invoice</th><th>C&amp;F</th><th>Stockist</th><th>Batch</th><th>Packs</th><th>RSL</th><th>Value</th></tr></thead><tbody>${last}</tbody></table><div class="muted">Latest 15 shown.</div></div>`;
+    <table><thead><tr><th>Date</th><th>Invoice</th><th>C&amp;F</th><th>Stockist</th><th>Batch</th><th>Packs</th><th>RSL</th><th>Value</th><th>Source</th></tr></thead><tbody>${last}</tbody></table><div class="muted">Latest 15 shown.</div></div>`;
   $("st_out").innerHTML = h;
 }
 

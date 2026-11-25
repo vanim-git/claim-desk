@@ -12,6 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+from agent import actionlog
 from agent.schemes_graph import run_schemes
 from agent.supply_graph import run_supply
 from agent.stock_graph import run_watch
@@ -69,11 +70,17 @@ def claim(body: ClaimRequest):
 
 @app.post("/api/decision")
 def decision(body: Decision):
-    """The person's decision. An override needs a reason. It is written to the log only: nothing is stored."""
+    """The person's decision. An override needs a reason. It is added to the append-only action log (and the function log)."""
     if body.action == "override" and not (body.reason or "").strip():
         return JSONResponse({"error": "An override needs a reason"}, status_code=422)
     print(json.dumps({"decision": body.model_dump()}), flush=True)
-    return {"recorded": True, "note": "Written to the function log only. Nothing is stored."}
+    try:
+        e = actionlog.append("claim", "decision accepted" if body.action == "accept" else "decision overridden", body.reviewer or "unnamed reviewer",
+                             ref=f"{body.claim_ref} line {body.line_no}", note=f"recommended {body.recommended}" + (f"; {body.reason}" if body.reason else ""))
+        return {"recorded": True, "seq": e["seq"], "durable": actionlog.durable(),
+                "note": "Added to the append-only action log." + ("" if actionlog.durable() else " On Vercel this file is lost on a cold start: not durable.")}
+    except OSError as err:   # the disk is read-only or full: the decision still shows in the function log above
+        return {"recorded": False, "note": f"Action log not writable ({err.__class__.__name__}); written to the function log only."}
 
 
 @app.get("/api/audit")
@@ -108,6 +115,47 @@ def scheme_desk(as_of: str | None = None):
 def supply_desk():
     """P1: unfilled orders, allocation shares vs current, and proposed moves of spare stock through the CDC."""
     return JSONResponse(jsonable_encoder(run_supply()))
+
+
+class Step(BaseModel):
+    desk: str                           # claim | stock | schemes | supply
+    step: str                           # one of actionlog.STEPS[desk]
+    by: str
+    ref: str = ""                       # what it is about: a batch, SKU, stockist, move or claim number
+    note: str = ""
+
+
+@app.post("/api/action")
+def record_action(body: Step):
+    """Record a step a person took on a desk. Append-only; the tool never takes the step itself."""
+    try:
+        e = actionlog.append(body.desk, body.step, body.by, body.ref, body.note)
+    except ValueError as err:
+        return JSONResponse({"error": str(err)}, status_code=422)
+    except OSError as err:
+        return JSONResponse({"error": f"action log not writable: {err.__class__.__name__}"}, status_code=503)
+    return {"recorded": True, "entry": e, "durable": actionlog.durable()}
+
+
+@app.get("/api/actions")
+def actions(limit: int = 100, desk: str | None = None):
+    """The latest steps first, with a check that the chain is unbroken, and the allowed steps per desk."""
+    return {"entries": actionlog.read(max(1, min(limit, 500)), desk), "chain": actionlog.verify(), "durable": actionlog.durable(),
+            "steps": actionlog.STEPS}
+
+
+@app.get("/api/digest")
+def digest_api():
+    """Weekly digest: one section per owner, built from the P1-P3 results. Read-only; nothing is stored or sent."""
+    from agent.digest import build_digest
+    return JSONResponse(jsonable_encoder(build_digest()))
+
+
+@app.get("/api/data-log")
+def data_log():
+    """What the loader fixes in the raw extracts, counted per file (raw files are never edited)."""
+    from agent.data import cleaning_log
+    return JSONResponse(jsonable_encoder(cleaning_log()))
 
 
 @app.get("/")

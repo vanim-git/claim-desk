@@ -170,3 +170,42 @@ def typo_candidates(batch_no: str) -> list[str]:
     fixed = batch_no[:1] + batch_no[1:].replace("O", "0")
     known = set(d.batch) | d.sold_batches | d.claimed_batches
     return [fixed] if fixed != batch_no and fixed in known else []
+
+
+# ---- fix log ---------------------------------------------------------------------------------------
+def cleaning_log() -> dict:
+    """What the loader changes, counted per file, so no fix is silent. Raw files are never edited; this re-reads them and counts
+    exact duplicate rows (dropped), dates not written dd-mm-yyyy (parsed), SKU codes with a hyphen, C&F codes without one,
+    invoice numbers written INV-, numbers with commas, and blank batch numbers (kept, but they cannot be matched to a batch)."""
+    files = {}
+    for path in sorted(DATA.glob("*.csv")):
+        rows = _rows(path.stem)
+        cols = [c for c in rows[0] if c != "row"] if rows else []
+        seen, dups = set(), 0
+        for r in rows:
+            k = _raw(r)
+            dups += k in seen
+            seen.add(k)
+        v = lambda c: [(r.get(c) or "").strip() for r in rows]
+        fx = {}
+        date_cols = [c for c in cols if "date" in c]
+        n = sum(1 for c in date_cols for x in v(c) if x and not re.fullmatch(r"\d{2}-\d{2}-\d{4}", x))
+        if n:
+            fx["dates_in_other_formats"] = n
+        n = sum(1 for c in cols if c.startswith("sku") for x in v(c) if "-" in x)
+        if n:
+            fx["sku_codes_with_hyphen"] = n
+        n = sum(1 for c in cols if c.startswith("cnf") for x in v(c) if re.fullmatch(r"[A-Za-z]{2}\d{2,3}", x))
+        if n:
+            fx["cnf_codes_without_hyphen"] = n
+        n = sum(1 for c in cols if "invoice" in c for x in v(c) if x.startswith("INV-"))
+        if n:
+            fx["invoice_numbers_written_INV-"] = n
+        n = sum(1 for c in cols for x in v(c) if re.fullmatch(r"\d{1,3}(,\d{3})+(\.\d+)?", x))
+        if n:
+            fx["numbers_with_commas"] = n
+        n = sum(1 for c in cols if c.startswith("batch") for x in v(c) if not x)
+        if n:
+            fx["blank_batch_numbers"] = n
+        files[path.name] = dict(rows=len(rows), exact_duplicate_rows_dropped=dups, **fx)
+    return dict(files=files, note="Raw files are never edited. Fixes are applied when the data is loaded (agent/data.py); this log counts them.")

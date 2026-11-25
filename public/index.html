@@ -10,7 +10,7 @@
 <header><h1>Claim desk</h1><p>Checks an expiry or breakage claim against policy CO-POL-014 and recommends. A person decides.</p>
 <span id="health" class="pill">checking…</span></header>
 <main>
-<nav class="nav" role="tablist"><button class="navtab on" data-page="claim" role="tab">Claim desk (P4–P5)</button><button class="navtab" data-page="stock" role="tab">Expiry watch (P3)</button><button class="navtab" data-page="schemes" role="tab">Scheme desk (P2)</button><button class="navtab" data-page="supply" role="tab">Supply desk (P1)</button></nav>
+<nav class="nav" role="tablist"><button class="navtab on" data-page="claim" role="tab">Claim desk (P4–P5)</button><button class="navtab" data-page="stock" role="tab">Expiry watch (P3)</button><button class="navtab" data-page="schemes" role="tab">Scheme desk (P2)</button><button class="navtab" data-page="supply" role="tab">Supply desk (P1)</button><button class="navtab" data-page="digest" role="tab">Weekly digest</button></nav>
 <div id="p-claim" class="page">
 <section class="card">
   <div class="tabs" role="tablist">
@@ -65,6 +65,12 @@
 </div><div id="p-supply" class="page" hidden><p class="muted">Unfilled orders, allocation shares against what each C&amp;F's stockists order, and spare stock that could move through the CDC. Proposals only: Kavita Rao approves.</p>
 <section class="card"><button id="su_go">Show supply desk</button></section>
 <div id="su_out" aria-live="polite"></div>
+</div><div id="p-digest" class="page" hidden><p class="muted">One short section per owner, put together from the Expiry watch, Scheme desk and Supply desk results. Read-only: nothing is stored or sent. Each line links to the desk behind it.</p>
+<div class="card"><button id="dg_go">Show the weekly digest</button> <button id="dg_log" class="secondary">Show data fixes</button> <button id="dg_acts" class="secondary">Show action log</button></div>
+<div class="card"><h2>Record a step</h2><p class="muted">Append-only: a step is added, never edited or removed. The tool never takes the step; a person did, and types their name here (no sign-in yet).</p>
+<select id="ac_desk"><option value="stock">Expiry watch</option><option value="schemes">Scheme desk</option><option value="supply">Supply desk</option><option value="claim">Claim desk</option></select>
+<select id="ac_step"></select> <input id="ac_ref" placeholder="About (batch, SKU, stockist, move, claim)" size="30"> <input id="ac_by" placeholder="Your name" size="16"> <input id="ac_note" placeholder="Note (optional)" size="26">
+<button id="ac_go">Record step</button><div id="ac_msg" class="muted"></div></div><div id="dg_out"></div>
 </div>
 </main>
 <footer>Facts come from the data files. The model, if switched on, only reads emails and words the explanation. Decisions are written to the log only.</footer>
@@ -72,6 +78,7 @@
 <script src="/stock.js"></script>
 <script src="/schemes.js"></script>
 <script src="/supply.js"></script>
+<script src="/digest.js"></script>
 <script src="/nav.js"></script>
 </body>
 </html>

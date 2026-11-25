@@ -56,3 +56,9 @@ ALLOC_SPIKE_CAP = 1.5          # my assumption: smooth scheme spikes by capping 
 ALLOC_REVIEW = "quarterly"     # Kavita (20 Nov): review quarterly, not monthly
 BASE_SHARE_FY = "FY25"         # Vaishali (20 Nov): the shares in use are the FY25 ones, unchanged
 TRANSFER_DAYS = "10-14"        # Kavita: approval is same-day; the physical move takes 10-14 days; no direct C&F-to-C&F
+
+# ---- Outward (monthly sales out of a C&F) ----------------------------------------------------------------
+# The snapshot's avg_monthly_outward_packs runs at ~0.35 of invoiced paid packs (median per C&F and SKU, every snapshot checked),
+# and Mohit's note says the client agreed to stop using the SAP outward field. Outward is now taken from invoices.
+OUTWARD_FROM_INVOICES = True   # False = use the snapshot field (kept only so the two can be compared)
+OUTWARD_MONTHS = 6             # median of the last six calendar months of paid packs; the median keeps scheme-quarter spikes out

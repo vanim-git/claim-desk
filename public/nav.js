@@ -1,5 +1,5 @@
 (() => {
-  const pages = ["claim", "stock", "schemes", "supply"];
+  const pages = ["claim", "stock", "schemes", "supply", "digest"];
   function show(p) {
     if (!pages.includes(p)) p = "claim";
     document.querySelectorAll(".navtab").forEach((b) => b.classList.toggle("on", b.dataset.page === p));

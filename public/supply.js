@@ -15,9 +15,9 @@ function render(d) {
   const s = d.shares, sr = Object.values(s.by_cnf).map((v) => `<tr><td>${esc(v.cnf)}</td><td>${pct(v.current)}</td><td>${pct(v.proposed)}</td><td>${(v.gap * 100).toFixed(1)} pts</td></tr>`).join("");
   h += `<div class="card"><h2>Allocation shares: FY25 share in use vs what stockists order</h2><p class="muted">${esc(s.basis)}. Review ${esc(s.review)}.</p>
     <table><thead><tr><th>C&amp;F</th><th>Current share</th><th>Proposed share</th><th>Gap</th></tr></thead><tbody>${sr}</tbody></table></div>`;
-  const m = d.moves, mr = m.moves.map((x) => `<tr><td>${esc(x.sku)}</td><td>${esc(x.from_cnf)}</td><td>${esc(x.to_cnf)}</td><td>${x.packs}</td><td>${L(x.value)}</td></tr>`).join("");
+  const m = d.moves, mr = m.moves.map((x) => `<tr><td>${esc(x.sku)}</td><td>${esc(x.from_cnf)}</td><td>${esc(x.to_cnf)}</td><td>${x.packs}</td><td>${L(x.value)}</td><td class="muted">spare: snapshot rows ${x.evidence.spare_at.rows.join(", ")}; need: ${x.evidence.need_at.invoice_lines.map((l) => esc(l.invoice) + " (row " + l.rows.join(",") + ")").join("; ")}</td></tr>`).join("");
   h += `<div class="card"><h2>Proposed moves through ${esc(m.moves[0]?.via || "the CDC")} (as of ${esc(m.as_of)})</h2><p>${L(m.covered_value)} of spare stock could cover part of ${L(m.unmet_value)} a month of unmet need. ${esc(m.note)}</p>
-    <table><thead><tr><th>SKU</th><th>From</th><th>To</th><th>Packs</th><th>Value</th></tr></thead><tbody>${mr}</tbody></table></div>`;
+    <table><thead><tr><th>SKU</th><th>From</th><th>To</th><th>Packs</th><th>Value</th><th>Source rows</th></tr></thead><tbody>${mr}</tbody></table></div>`;
   h += `<div class="card muted">${d.notes.map(esc).join("<br>")}</div>`;
   $("su_out").innerHTML = h;
 }

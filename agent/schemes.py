@@ -139,8 +139,8 @@ def screen(stockist: str, sku: str, as_of: date, order_paid: float | None = None
     avg3 = sum(paid.get(m, 0) for m in prev) / C.SCHEME_LOOKBACK_MONTHS
     normal = sorted(v for m, v in paid.items() if m not in sch and m < m0)
     nm = normal[len(normal) // 2] if normal else 0
-    bought = sum(s["paid"] + s["free"] for s in _by_pair().get((stockist, sku), [])
-                 if 0 < (as_of - s["date"]).days <= 91)
+    recent = [s for s in _by_pair().get((stockist, sku), []) if 0 < (as_of - s["date"]).days <= 91]
+    bought = sum(s["paid"] + s["free"] for s in recent)
     est = max(bought - C.SCHEME_LOOKBACK_MONTHS * nm, 0)
     est_months = est / nm if nm else None
     warns = []
@@ -152,7 +152,8 @@ def screen(stockist: str, sku: str, as_of: date, order_paid: float | None = None
     if nm == 0:
         warns.append("no non-scheme months on record: normal month unknown, RSM to confirm stock (§4.5)")
     return dict(stockist=stockist, sku=sku, avg_paid_3m=avg3, minimum_order=moq, normal_month=nm, bought_90d=bought,
-                est_stock_packs=est, est_stock_months=est_months, warnings=warns, blocked=C.SCHEME_BLOCKS and bool(warns),
+                est_stock_packs=est, est_stock_months=est_months, warnings=warns,
+                evidence=dict(file="primary_sales.csv", rows=[s["row"] for s in recent[:8]], total_rows=len(recent)), blocked=C.SCHEME_BLOCKS and bool(warns),
                 label="Stock is an estimate from purchases; no secondary data exists (SSS not received, §4.5 note).")
 
 

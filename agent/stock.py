@@ -5,6 +5,7 @@ from datetime import date
 
 import config as C
 from agent import data as D
+from agent import schemes as X
 
 def cnf_code(s: str) -> str:
     s = (s or "").strip().upper().replace("-", "")
@@ -43,6 +44,38 @@ def snapshots() -> list[dict]:
 
 def latest_date() -> date:
     return max(r["as_of"] for r in snapshots() if r["as_of"])
+
+
+def outward_by_pair(as_of: date) -> dict:
+    """Monthly outward per (C&F, SKU), worked out from invoices: the median of the last OUTWARD_MONTHS calendar months of paid packs
+    up to and including the month of `as_of`. Free packs are left out (scheme loading). The snapshot field is the fallback."""
+    key = ("o", as_of, C.OUTWARD_MONTHS)
+    if key in _cache:
+        return _cache[key]
+    months = []
+    y, m = as_of.year, as_of.month
+    for _ in range(C.OUTWARD_MONTHS):
+        months.append((y, m))
+        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+    paid = {}
+    for s in X.sales():
+        if s["date"] and (s["date"].year, s["date"].month) in months:
+            k = (s["cnf"], s["sku"], s["date"].year, s["date"].month)
+            paid[k] = paid.get(k, 0.0) + s["paid"]
+    pairs = {(c, k) for (c, k, _, _) in paid}
+    out = {}
+    for c, k in pairs:
+        v = sorted(paid.get((c, k, yy, mm), 0.0) for yy, mm in months)
+        n = len(v)
+        out[(c, k)] = v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2
+    _cache[key] = out
+    return out
+
+
+def outward_for(cnf: str, sku: str, as_of: date, snapshot_value: float) -> float:
+    if not C.OUTWARD_FROM_INVOICES:
+        return snapshot_value
+    return outward_by_pair(as_of).get((cnf, sku), snapshot_value)
 
 
 def sellable(batches: list[dict], outward: float, as_of: date) -> list[dict]:
@@ -89,7 +122,7 @@ def watch(as_of: date | None = None, cnf: str | None = None) -> dict:
         by_pair.setdefault((r["cnf"], r["sku"]), []).append(b)
     out, summary = [], {}
     for (c, s), bs in by_pair.items():
-        outward = bs[0]["outward"]
+        outward = outward_for(c, s, as_of, bs[0]["outward"])
         tot = sum(b["qty"] for b in bs)
         cover = tot / outward if outward else None
         for b in sellable(bs, outward, as_of):
