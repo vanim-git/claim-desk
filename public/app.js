@@ -50,7 +50,7 @@ function lineHtml(r, i) {
   return `<div class="card" data-i="${i}"><span class="badge ${r.outcome}">${LABEL[r.outcome] || r.outcome}</span>
     <span class="muted"> line ${r.line_no}: ${esc(l.stockist)} · batch ${esc(l.batch)} · qty ${esc(l.qty)} · ${esc(l.claim_type)}</span>
     <div>${flags}</div>${linked}${credit}${allow}
-    ${rows ? `<table><thead><tr><th>Rule</th><th>Clause</th><th>Result</th><th>Detail and evidence</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
+    ${rows ? `<table class="rules"><thead><tr><th>Rule</th><th>Clause</th><th>Result</th><th>Detail and evidence</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
     ${notes ? `<ul>${notes}</ul>` : ""}
     <div class="act"><button data-a="accept">Accept recommendation</button><input placeholder="Reason (needed to override)"><button class="ghost" data-a="override">Override</button><span class="done"></span></div></div>`;
 }
